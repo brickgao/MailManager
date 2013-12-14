@@ -1,3 +1,6 @@
 com.google.android.gm/*
 com.google.android.gm.zip
 .idea
+*.db
+*.html
+.*
