@@ -5,6 +5,8 @@ from sqlalchemy import create_engine
 import zlib
 import re
 import os
+import datetime
+
 
 class con_db():
     def __init__(self, path):
@@ -19,7 +21,8 @@ class con_db():
             limit = 'limit %d, %d' % (begin, end)
 
         sql = 'select _id, fromAddress, subject, bodyCompressed, ' \
-              'toAddresses, joinedAttachmentInfos  from messages ' + limit
+              'toAddresses, joinedAttachmentInfos, dateSentMs, ' \
+              'dateReceivedMs, snippet  from messages ' + limit
 
         query = self.engine.execute(sql)
 
@@ -31,7 +34,9 @@ class con_db():
             else:
                 body = ''
             ret.append({'id': row[0], 'from_address': row[1], 'subject': row[2],
-                        'body': body, 'to_address': row[4], 'attachments': attachments})
+                        'body': body, 'to_address': row[4], 'attachments': attachments,
+                        'send_data': self.format_time(row[6]),
+                        'receive_date': self.format_time(row[7]), 'snippet': row[8]})
 
         return ret
 
@@ -77,12 +82,15 @@ class con_db():
             return '%.3f MB' % (size / 1024.0 / 1024)
         return '%.3f GB' % (size / 1024.0 / 1024 / 1024)
 
+    def format_time(self, time):
+        t = datetime.datetime.fromtimestamp(time / 1000.0)
+        return t
 
 if __name__ == '__main__':
     path = r'C:\Users\ST\Documents\GitHub\MailManager' \
            r'\com.google.android.gm\databases\mailstore.funssuse@gmail.com.db'
     ins = con_db(path)
 
-    query = ins.get_mail_list(10, 20)
+    query = ins.get_mail_list(1, 2)
     for i in query:
-        print i.get('attachments')
+        print i
