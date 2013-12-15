@@ -15,6 +15,8 @@ class con_db():
         mail_dir = os.path.dirname(self.db_dir)
         self.attach_dir = os.path.join(mail_dir, 'cache')
 
+        self.count, = self.engine.execute('select count(*) from messages').first()
+
     def get_mail_list(self, begin=None, end=None):
         limit = ''
         if begin and end:
