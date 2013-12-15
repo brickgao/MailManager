@@ -34,5 +34,6 @@ use con_db.count to get count of mails
 
 exceptions:
     if database operation failed, it will raise:
-        sqlalchemy.exc.OperationalError  if the *.db file didn't exist
-        sqlalchemy.exc.DatabaseError     if the *.db file isn't a google mail database
+        sqlalchemy.exc.OperationalError  the *.db file didn't exist
+                                         the *.db file isn't a google mail database
+        sqlalchemy.exc.DatabaseError     the *.db file isn't a google mail database
