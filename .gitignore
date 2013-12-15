@@ -4,3 +4,5 @@ com.google.android.gm.zip
 *.db
 *.html
 .*
+*.db-shm
+*.db-wal

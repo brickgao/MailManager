@@ -3,11 +3,15 @@ __author__ = 'ST'
 
 from sqlalchemy import create_engine
 import zlib
-
+import re
+import os
 
 class con_db():
     def __init__(self, path):
         self.engine = create_engine('sqlite:///' + path)
+        (self.db_dir, self.db_name) = os.path.split(path)
+        mail_dir = os.path.dirname(self.db_dir)
+        self.attach_dir = os.path.join(mail_dir, 'cache')
 
     def get_mail_list(self, begin=None, end=None):
         limit = ''
@@ -33,21 +37,52 @@ class con_db():
 
     def get_attachments(self, info):
         ret = []
-        attach_info = ''
-        if info:
-            attach_info = info.split('|')[6::7]
-        for item in attach_info:
-            sql = "select distinct filename from attachments where originExtras = '" + item + "'"
+        if not info:
+            return ret
+        attach_id = info.split('|')[6::7]
+        attach_name = info.split('|')[1::7]
+        attach_size = info.split('|')[3::7]
+        for index in range(0, len(attach_id)):
+            sql = "select distinct filename from attachments where originExtras = '" \
+                  + attach_id[index] + "'"
             query = self.engine.execute(sql)
+
+            format_size = self.format_size(int(attach_size[index]))
+
             for row in query:
-                ret.append({'filename': row[0]})
+                file_info = {'name': attach_name[index], 'format_size': format_size}
+                file_info.update(self.check_file(row[0]))
+                ret.append(file_info)
         return ret
+
+    def check_file(self, path):
+        info = re.match(r'^file:///data/data/com\.google\.android\.gm/cache/(.+)/(.+)', path)
+        if not info:
+            return {'exist': False}
+        else:
+            file_path = os.path.join(self.attach_dir, info.groups()[0], info.groups()[1])
+            file_name = info.groups()[1]
+            exist = os.path.exists(file_path)
+            if exist:
+                format_size = self.format_size(os.path.getsize(file_path))
+                return {'path': file_path, 'exist': exist, 'format_size': format_size}
+            return {'path': file_path, 'exist': exist}
+
+    def format_size(self, size):
+        if size < 1024:
+            return '%d B' % size
+        if size < 1024 * 1024:
+            return '%.3f KB' % (size / 1024.0)
+        if size < 1024 * 1024 * 1024:
+            return '%.3f MB' % (size / 1024.0 / 1024)
+        return '%.3f GB' % (size / 1024.0 / 1024 / 1024)
 
 
 if __name__ == '__main__':
     path = r'C:\Users\ST\Documents\GitHub\MailManager' \
            r'\com.google.android.gm\databases\mailstore.funssuse@gmail.com.db'
     ins = con_db(path)
+
     query = ins.get_mail_list(10, 20)
     for i in query:
         print i.get('attachments')
