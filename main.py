@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from PyQt4 import QtGui
-
+from PyQt4 import QtGui, QtCore
 
 class QMainArea(QtGui.QWidget):
 
@@ -16,13 +15,18 @@ class QMainArea(QtGui.QWidget):
         grid = QtGui.QGridLayout()
         grid.setSpacing(5)
 
-        self.table = QtGui.QTableWidget(10,6)
-        
-        self.listWidget = QtGui.QListWidget()
-        
-        grid.addWidget(self.table, 1, 1)
-        grid.addWidget(self.listWidget, 1, 0)
 
+        self.AddressList = QtGui.QListWidget()
+
+        self.MailList = QtGui.QTreeWidget()
+        self.MailList.setHeaderLabels([u'附件', u'时间', u'收件人', u'发件人', u'标题'])
+
+        grid.addWidget(self.AddressList, 0, 0)
+        grid.addWidget(self.MailList, 0, 1)
+
+
+        grid.setColumnStretch(0, 1)
+        grid.setColumnStretch(1, 4)
         self.setLayout(grid) 
 
 class MainWindow(QtGui.QMainWindow):
