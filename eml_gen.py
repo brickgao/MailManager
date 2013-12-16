@@ -46,7 +46,7 @@ def save_to_eml(obj, filepath):
 		attobj = MIMEApplication(attdata)
 		attobj.add_header('Content-Disposition', 'attachment', filename=filename)
 		eml_obj.attach(attobj)
-	
+
 	# Write to .eml file
 	fp = open(filepath, "w")
 	fp.write(eml_obj.as_string())
