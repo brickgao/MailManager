@@ -1,0 +1,39 @@
+manual book of con_db.py
+
+required libraries:
+    SQLAlchemy: 0.8.0
+
+
+use con_db(path) to get a con_db instance
+    path is the *.db file's absolute path
+
+use con_db.get_mail_list(begin=None, end=None) to get emails
+    note that [begin, end] and begin from 1
+    if begin == None and end == None, will return all mails
+
+    return a list of mails(dictionary)
+        key of dictionary:
+            id: unknown
+            from_address: string
+            subject: string
+            body: string
+            to_address: string
+            attachments(list of attachments(dictionary))
+                key of dictionary:
+                    exist: bool whether this attachment exist in file system
+                    name: string
+                    format_size: string size of this file ended with 'B', 'KB' or 'GB'
+                    path: string absolute path of this file if exist == True
+            send_data: datetime
+            receive_date: datetime
+            snippet: string
+
+use con_db.count to get count of mails
+    return int
+
+
+exceptions:
+    if database operation failed, it will raise:
+        sqlalchemy.exc.OperationalError  the *.db file didn't exist
+                                         the *.db file isn't a google mail database
+        sqlalchemy.exc.DatabaseError     the *.db file isn't a google mail database
