@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+from con_db import con_db
 from PyQt4 import QtGui, QtCore
 
 class QMainArea(QtGui.QWidget):
@@ -19,14 +20,12 @@ class QMainArea(QtGui.QWidget):
         self.AddressList = QtGui.QListWidget()
 
         self.MailList = QtGui.QTreeWidget()
-        self.MailList.setHeaderLabels([u'附件', u'时间', u'收件人', u'发件人', u'标题'])
+        self.MailList.setHeaderLabels([u'时间', u'收件人',
+                                       u'发件人', u'标题', u'预览'])
 
-        grid.addWidget(self.AddressList, 0, 0)
-        grid.addWidget(self.MailList, 0, 1)
+        grid.addWidget(self.MailList)
 
 
-        grid.setColumnStretch(0, 1)
-        grid.setColumnStretch(1, 4)
         self.setLayout(grid) 
 
 class MainWindow(QtGui.QMainWindow):
@@ -52,6 +51,7 @@ class MainWindow(QtGui.QMainWindow):
 
         inputAction = QtGui.QAction(u'打开', self)
         inputAction.setStatusTip(u'打开文件')
+        inputAction.triggered.connect(self.inputfile)
     
         fileMenu = menubar.addMenu(u'文件')
         fileMenu.addAction(inputAction)
@@ -66,6 +66,10 @@ class MainWindow(QtGui.QMainWindow):
         self.setWindowTitle(u'Mail Manager')
         self.show()
 
+    def inputfile(self):
+
+        fname = QtGui.QFileDialog.getOpenFileName(self, u'打开文件')
+        self.db = con_db(fname)
 
 def main():
     
