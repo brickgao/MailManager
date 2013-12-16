@@ -8,13 +8,13 @@ from PyQt4 import QtGui, QtCore, QtWebKit
 class QMailView(QtGui.QDialog):
 
     def __init__(self, mailMsg, parent = None):
-        
+
         self.mailMsg = mailMsg
         QtGui.QDialog.__init__(self, parent)
         self.initLayout()
 
     def initLayout(self):
-        
+
         self.from_address = QtGui.QLabel(u'发信人：')
         self.from_address_val = QtGui.QLabel(self.mailMsg['from_address'])
 
@@ -36,12 +36,12 @@ class QMailView(QtGui.QDialog):
         self.ContentView = QtGui.QLabel(u'邮件正文：')
         self.ContentView_val = QtWebKit.QWebView()
         HtmlCode = unicode(self.mailMsg['body'], 'utf-8')
-        self.ContentView_val.setHtml(HtmlCode, 
+        self.ContentView_val.setHtml(HtmlCode,
                             QtCore.QUrl(''))
 
         self.attachmentsList = QtGui.QLabel(u'附件：')
         self.attachmentsList_val = QtGui.QTreeWidget()
-        self.attachmentsList_val.setHeaderLabels([u'#' ,u'文件名', 
+        self.attachmentsList_val.setHeaderLabels([u'#' ,u'文件名',
                                              u'文件大小', u'是否存在',
                                              u'文件路径'])
         self.attachmentsList_val.setColumnWidth(0, 60)
@@ -85,15 +85,15 @@ class QMailView(QtGui.QDialog):
 
         self.show()
 
-    
+
     def mailOutput(self):
 
         fname = QtGui.QFileDialog.getSaveFileName(self, u'保存文件', u'', u'*.eml')
-        sfname = str(fname)
-        if sfname == '':
+        fname = unicode(fname)
+        if fname == '':
             return
-        sfname = os.path.abspath(sfname)
-        eml_gen.save_to_eml(self.mailMsg, sfname)
+        fname = os.path.abspath(fname)
+        eml_gen.save_to_eml(self.mailMsg, fname)
 
 
     def attachmentsListOutput(self):
@@ -139,12 +139,12 @@ class QMainArea(QtGui.QWidget):
 
         grid.addWidget(self.mailList)
 
-        self.setLayout(grid) 
+        self.setLayout(grid)
 
 
     def updateInfo(self, list_db):
 
-        self.mailList.clear() 
+        self.mailList.clear()
         self.list_db = list_db
 
         for i in range(len(self.list_db)):
@@ -195,7 +195,7 @@ class MainWindow(QtGui.QMainWindow):
         inputAction = QtGui.QAction(u'打开', self)
         inputAction.setStatusTip(u'打开文件')
         inputAction.triggered.connect(self.inputFile)
-    
+
         fileMenu = menubar.addMenu(u'文件')
         fileMenu.addAction(inputAction)
         fileMenu.addAction(exitAction)
@@ -203,7 +203,7 @@ class MainWindow(QtGui.QMainWindow):
         self.mainArea = QMainArea()
 
         self.setCentralWidget(self.mainArea)
-        
+
         self.setGeometry(100, 100, 800, 600)
         self.setWindowTitle(u'Mail Manager')
         self.show()
@@ -229,20 +229,20 @@ class MainWindow(QtGui.QMainWindow):
                 self.errorAlert(u'解析 db 错误，请选择正确的 db 文件')
             else:
                 self.mainArea.updateInfo(self.list_db)
-            
 
-    def errorAlert(self, s):  
 
-        QtGui.QMessageBox.critical(self, u'错误', s)  
+    def errorAlert(self, s):
+
+        QtGui.QMessageBox.critical(self, u'错误', s)
 
 
 
 def main():
-    
+
     app = QtGui.QApplication(sys.argv)
     ex = MainWindow()
     sys.exit(app.exec_())
-    
+
 
 
 if __name__ == '__main__':

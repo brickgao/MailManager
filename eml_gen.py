@@ -12,6 +12,7 @@ from con_db import con_db
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
+from email.header import Header
 import os
 import os.path
 import stat
@@ -44,7 +45,7 @@ def save_to_eml(obj, filepath):
 			filename += '.not.exist'
 
 		attobj = MIMEApplication(attdata)
-		attobj.add_header('Content-Disposition', 'attachment', filename=filename)
+		attobj.add_header('Content-Disposition', 'attachment', filename=(Header(filename, 'utf-8').encode()))
 		eml_obj.attach(attobj)
 
 	# Write to .eml file
