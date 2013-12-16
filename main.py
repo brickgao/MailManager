@@ -6,25 +6,25 @@ from PyQt4 import QtGui, QtCore, QtWebKit
 
 class QMailView(QtGui.QDialog):
 
-    def __init__(self, MailMsg, parent = None):
+    def __init__(self, mailMsg, parent = None):
         
-        self.MailMsg = MailMsg
+        self.mailMsg = mailMsg
         QtGui.QDialog.__init__(self, parent)
         self.initLayout()
 
     def initLayout(self):
         
         self.from_address = QtGui.QLabel(u'发信人：')
-        self.from_address_val = QtGui.QLabel(self.MailMsg['from_address'])
+        self.from_address_val = QtGui.QLabel(self.mailMsg['from_address'])
 
         self.to_address = QtGui.QLabel(u'收信人：')
-        self.to_address_val = QtGui.QLabel(self.MailMsg['to_address'])
+        self.to_address_val = QtGui.QLabel(self.mailMsg['to_address'])
 
         self.subject = QtGui.QLabel(u'标题：')
-        self.subject_val = QtGui.QLabel(self.MailMsg['subject'])
+        self.subject_val = QtGui.QLabel(self.mailMsg['subject'])
 
         self.receive_date = QtGui.QLabel(u'收信时间：')
-        self.receive_date_val = self.MailMsg['receive_date']
+        self.receive_date_val = self.mailMsg['receive_date']
         self.date_s = QtGui.QLabel(
                     str(self.receive_date_val.year) + '-' + \
                     str(self.receive_date_val.month) + '-' + \
@@ -34,7 +34,7 @@ class QMailView(QtGui.QDialog):
 
         self.ContentView = QtGui.QLabel(u'邮件正文：')
         self.ContentView_val = QtWebKit.QWebView()
-        HtmlCode = unicode(self.MailMsg['body'], 'utf-8')
+        HtmlCode = unicode(self.mailMsg['body'], 'utf-8')
         self.ContentView_val.setHtml(HtmlCode, 
                             QtCore.QUrl(''))
 
@@ -44,22 +44,22 @@ class QMailView(QtGui.QDialog):
                                              u'文件大小', u'是否存在',
                                              u'文件路径'])
         self.attachmentsList_val.setColumnWidth(0, 60)
-        self.attachmentsList_val.itemDoubleClicked.connect(self.attachmentsListouput)
-        for i in range(len(self.MailMsg['attachments'])):
-            FileInfo = QtGui.QTreeWidgetItem()
-            FileInfo.setText(0, str(i))
-            FileInfo.setText(1, self.MailMsg['attachments'][i]['name'])
-            FileInfo.setText(2, self.MailMsg['attachments'][i]['format_size'])
-            FileInfo.setText(3, str(self.MailMsg['attachments'][i]['exist']))
-            if self.MailMsg['attachments'][i]['exist'] == True:
-                filepath = self.MailMsg['attachments'][i]['path']
-                FileInfo.setText(4, filepath)
+        self.attachmentsList_val.itemDoubleClicked.connect(self.attachmentsListOutput)
+        for i in range(len(self.mailMsg['attachments'])):
+            fileInfo = QtGui.QTreeWidgetItem()
+            fileInfo.setText(0, str(i))
+            fileInfo.setText(1, self.mailMsg['attachments'][i]['name'])
+            fileInfo.setText(2, self.mailMsg['attachments'][i]['format_size'])
+            fileInfo.setText(3, str(self.mailMsg['attachments'][i]['exist']))
+            if self.mailMsg['attachments'][i]['exist'] == True:
+                filepath = self.mailMsg['attachments'][i]['path']
+                fileInfo.setText(4, filepath)
             else:
-                FileInfo.setText(4, u'文件不存在')
-            self.attachmentsList_val.addTopLevelItem(FileInfo)
+                fileInfo.setText(4, u'文件不存在')
+            self.attachmentsList_val.addTopLevelItem(fileInfo)
 
-        self.MailoutputBtn = QtGui.QPushButton(u'导出当前文件')
-        self.MailoutputBtn.clicked.connect(self.Mailoutput)
+        self.mailOutputBtn = QtGui.QPushButton(u'导出当前文件')
+        self.mailOutputBtn.clicked.connect(self.mailOutput)
 
         grid = QtGui.QGridLayout()
         grid.setSpacing(10)
@@ -75,38 +75,43 @@ class QMailView(QtGui.QDialog):
         grid.addWidget(self.attachmentsList, 5, 0)
         grid.addWidget(self.attachmentsList_val, 6, 0, 1, 3)
         grid.addWidget(self.ContentView, 7, 0)
-        grid.addWidget(self.MailoutputBtn, 7, 2)
+        grid.addWidget(self.mailOutputBtn, 7, 2)
         grid.addWidget(self.ContentView_val, 8, 0, 1, 3)
 
         self.setLayout(grid)
 
-        self.setWindowTitle(u'查看邮件：' + self.MailMsg['subject'])
+        self.setWindowTitle(u'查看邮件：' + self.mailMsg['subject'])
 
         self.show()
+
     
-    def Mailoutput(self):
+    def mailOutput(self):
 
         fname = QtGui.QFileDialog.getSaveFileName(self, u'保存文件', u'', u'*.eml')
         sfname = str(fname)
         if sfname == '':
             return
         sfname = os.path.abspath(sfname)
-        eml_gen.save_to_eml(self.MailMsg, sfname)
+        eml_gen.save_to_eml(self.mailMsg, sfname)
 
-    def attachmentsListouput(self):
+
+    def attachmentsListOutput(self):
 
         Id = int(self.attachmentsList_val.currentItem().text(0))
-        if self.MailMsg['attachments'][Id]['exist'] != True:
-            return self.ErrorAlert(u'请选择存在的文件')
-        fname = QtGui.QFileDialog.getSaveFileName(self, u'保存附件', self.MailMsg['attachments'][Id]['name'], u'*.*')
+        if self.mailMsg['attachments'][Id]['exist'] != True:
+            return self.errorAlert(u'请选择存在的文件')
+        fname = QtGui.QFileDialog.getSaveFileName(self, u'保存附件', self.mailMsg['attachments'][Id]['name'], u'*.*')
         fname = unicode(fname)
         if fname == '':
             return
-        shutil.copyfile(self.MailMsg['attachments'][Id]['path'], fname)
+        shutil.copyfile(self.mailMsg['attachments'][Id]['path'], fname)
 
-    def ErrorAlert(self, s):
+
+    def errorAlert(self, s):
 
         QtGui.QMessageBox.critical(self, u'错误', s)
+
+
 
 class QMainArea(QtGui.QWidget):
 
@@ -115,52 +120,57 @@ class QMainArea(QtGui.QWidget):
         super(QMainArea, self).__init__()
         self.initLayout()
 
+
     def initLayout(self):
 
         grid = QtGui.QGridLayout()
         grid.setSpacing(5)
 
-        self.MailList = QtGui.QTreeWidget()
-        self.MailList.setHeaderLabels([u'#' ,u'时间', u'收件人',
+        self.mailList = QtGui.QTreeWidget()
+        self.mailList.setHeaderLabels([u'#' ,u'时间', u'收件人',
                                        u'发件人', u'标题', u'预览'])
-        self.MailList.setColumnWidth(0, 60)
-        self.MailList.setColumnWidth(1, 120)
-        self.MailList.setColumnWidth(2, 200)
-        self.MailList.setColumnWidth(3, 200)
-        self.MailList.setColumnWidth(4, 100)
-        self.MailList.itemDoubleClicked.connect(self.getMailView)
+        self.mailList.setColumnWidth(0, 60)
+        self.mailList.setColumnWidth(1, 120)
+        self.mailList.setColumnWidth(2, 200)
+        self.mailList.setColumnWidth(3, 200)
+        self.mailList.setColumnWidth(4, 100)
+        self.mailList.itemDoubleClicked.connect(self.getMailView)
 
-        grid.addWidget(self.MailList)
+        grid.addWidget(self.mailList)
 
         self.setLayout(grid) 
 
+
     def updateInfo(self, list_db):
 
-        self.MailList.clear() 
+        self.mailList.clear() 
         self.list_db = list_db
 
         for i in range(len(self.list_db)):
-            MailInfo = QtGui.QTreeWidgetItem()
+            mailInfo = QtGui.QTreeWidgetItem()
             receive_date = self.list_db[i]['receive_date']
             date_s = str(receive_date.year) + '-' + \
                      str(receive_date.month) + '-' + \
                      str(receive_date.day) + ' ' + \
                      str(receive_date.hour) + ':' + \
                      str(receive_date.second)
-            MailInfo.setText(0, str(i))
-            MailInfo.setText(1, date_s)
-            MailInfo.setText(2, self.list_db[i]['to_address'])
-            MailInfo.setText(3, self.list_db[i]['from_address'])
-            MailInfo.setText(4, self.list_db[i]['subject'])
-            MailInfo.setText(5, self.list_db[i]['snippet'])
-            self.MailList.addTopLevelItem(MailInfo)
+            mailInfo.setText(0, str(i))
+            mailInfo.setText(1, date_s)
+            mailInfo.setText(2, self.list_db[i]['to_address'])
+            mailInfo.setText(3, self.list_db[i]['from_address'])
+            mailInfo.setText(4, self.list_db[i]['subject'])
+            mailInfo.setText(5, self.list_db[i]['snippet'])
+            self.mailList.addTopLevelItem(mailInfo)
+
 
     def getMailView(self):
 
-        MailId = int(self.MailList.currentItem().text(0))
-        MailView = QMailView(self.list_db[MailId], parent = self)
-        MailView.exec_()
-        MailView.destroy()
+        mailId = int(self.mailList.currentItem().text(0))
+        mailView = QMailView(self.list_db[mailId], parent = self)
+        mailView.exec_()
+        mailView.destroy()
+
+
 
 class MainWindow(QtGui.QMainWindow):
 
@@ -168,6 +178,7 @@ class MainWindow(QtGui.QMainWindow):
 
         super(MainWindow, self).__init__()
         self.initLayout()
+
 
     def initLayout(self):
 
@@ -177,26 +188,27 @@ class MainWindow(QtGui.QMainWindow):
 
         exitAction = QtGui.QAction(u'退出', self)
         exitAction.setShortcut('Ctrl+Q')
-        exitAction.setStatusTip(u'退出 Mail Manager')
+        exitAction.setStatusTip(u'退出 mail Manager')
         exitAction.triggered.connect(QtGui.qApp.quit)
 
         inputAction = QtGui.QAction(u'打开', self)
         inputAction.setStatusTip(u'打开文件')
-        inputAction.triggered.connect(self.inputfile)
+        inputAction.triggered.connect(self.inputFile)
     
         fileMenu = menubar.addMenu(u'文件')
         fileMenu.addAction(inputAction)
         fileMenu.addAction(exitAction)
 
-        self.MainArea = QMainArea()
+        self.mainArea = QMainArea()
 
-        self.setCentralWidget(self.MainArea)
+        self.setCentralWidget(self.mainArea)
         
         self.setGeometry(100, 100, 800, 600)
         self.setWindowTitle(u'Mail Manager')
         self.show()
 
-    def inputfile(self):
+
+    def inputFile(self):
 
         fname = QtGui.QFileDialog.getOpenFileName(self, u'打开文件', u'', u'*.db')
         sfname = str(fname)
@@ -207,23 +219,22 @@ class MainWindow(QtGui.QMainWindow):
             self.db = con_db(sfname)
         except Exception, e:
             print e
-            self.ErrorAlert(u'打开 db 错误，请选择正确的 db 文件')
+            self.errorAlert(u'打开 db 错误，请选择正确的 db 文件')
         else:
             try:
                 self.list_db = self.db.get_mail_list()
             except Exception, e:
                 print e
-                self.ErrorAlert(u'解析 db 错误，请选择正确的 db 文件')
+                self.errorAlert(u'解析 db 错误，请选择正确的 db 文件')
             else:
-                self.MainArea.updateInfo(self.list_db)
+                self.mainArea.updateInfo(self.list_db)
             
 
-    def ErrorAlert(self, s):  
+    def errorAlert(self, s):  
 
         QtGui.QMessageBox.critical(self, u'错误', s)  
-        
-    
-            
+
+
 
 def main():
     
