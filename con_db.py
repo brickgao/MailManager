@@ -47,9 +47,9 @@ class con_db():
         ret = []
         if not info:
             return ret
-        attach_id = info.split('|')[6::7]
-        attach_name = info.split('|')[1::7]
-        attach_size = info.split('|')[3::7]
+        attach_id = info.split('|')[6::8]
+        attach_name = info.split('|')[1::8]
+        attach_size = info.split('|')[3::8]
         for index in range(0, len(attach_id)):
             sql = "select distinct filename from attachments where originExtras = '" \
                   + attach_id[index] + "'"
