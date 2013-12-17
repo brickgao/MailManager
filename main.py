@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import sys, os, eml_gen, shutil
+import sys, os, eml_gen, shutil, re
 from con_db import con_db
 from PyQt4 import QtGui, QtCore, QtWebKit
 
@@ -45,7 +45,7 @@ class QMailView(QtGui.QDialog):
                                              u'文件大小', u'是否存在',
                                              u'文件路径'])
         self.attachmentsList_val.setColumnWidth(0, 60)
-        self.attachmentsList_val.itemDoubleClicked.connect(self.attachmentsListOutput)
+        self.attachmentsList_val.itemDoubleClicked.connect(self.attachmentsOpen)
         for i in range(len(self.mailMsg['attachments'])):
             fileInfo = QtGui.QTreeWidgetItem()
             fileInfo.setText(0, str(i))
@@ -62,6 +62,9 @@ class QMailView(QtGui.QDialog):
         self.mailOutputBtn = QtGui.QPushButton(u'导出当前文件')
         self.mailOutputBtn.clicked.connect(self.mailOutput)
 
+        self.attachmentsOutputBtn = QtGui.QPushButton(u'导出选中附件')
+        self.attachmentsOutputBtn.clicked.connect(self.attachmentsOutput)
+
         grid = QtGui.QGridLayout()
         grid.setSpacing(10)
 
@@ -74,6 +77,7 @@ class QMailView(QtGui.QDialog):
         grid.addWidget(self.receive_date, 4, 0)
         grid.addWidget(self.date_s, 4, 1)
         grid.addWidget(self.attachmentsList, 5, 0)
+        grid.addWidget(self.attachmentsOutputBtn, 5, 2)
         grid.addWidget(self.attachmentsList_val, 6, 0, 1, 3)
         grid.addWidget(self.ContentView, 7, 0)
         grid.addWidget(self.mailOutputBtn, 7, 2)
@@ -95,14 +99,23 @@ class QMailView(QtGui.QDialog):
         fname = os.path.abspath(fname)
         eml_gen.save_to_eml(self.mailMsg, fname)
 
-
-    def attachmentsListOutput(self):
+    def attachmentsOpen(self):
 
         Id = int(self.attachmentsList_val.currentItem().text(0))
-        if self.mailMsg['attachments'][Id]['exist'] != True:
+        if not self.mailMsg['attachments'][Id]['exist']:
+            return self.errorAlert(u'请选择存在的文件')
+        fname = self.mailMsg['attachments'][Id]['path'].encode('gbk')
+        os.system(fname)
+
+    def attachmentsOutput(self):
+
+        if not self.attachmentsList_val.currentItem():
+            return self.errorAlert(u'请选择文件')
+        Id = int(self.attachmentsList_val.currentItem().text(0))
+        if not self.mailMsg['attachments'][Id]['exist']:
             return self.errorAlert(u'请选择存在的文件')
         fname = QtGui.QFileDialog.getSaveFileName(self, u'保存附件', self.mailMsg['attachments'][Id]['name'], u'*.*')
-        fname = unicode(fname)
+        fname = unicode(fname, 'gbk')
         if fname == '':
             return
         shutil.copyfile(self.mailMsg['attachments'][Id]['path'], fname)
@@ -211,19 +224,26 @@ class MainWindow(QtGui.QMainWindow):
 
     def inputFile(self):
 
-        fname = QtGui.QFileDialog.getOpenFileName(self, u'打开文件', u'', u'*.db')
-        sfname = str(fname)
-        if sfname == '':
+        fname = os.path.abspath(QtGui.QFileDialog.getExistingDirectory(self, u'打开文件夹'))
+        if fname == '':
             return
-        sfname = os.path.abspath(sfname)
         try:
-            self.db = con_db(sfname)
+            alist = os.listdir(fname + '\\databases')
         except Exception, e:
             print e
-            self.errorAlert(u'打开 db 错误，请选择正确的 db 文件')
+            self.errorAlert(u'打开 db 错误，请选择正确的文件夹')
         else:
+            flist = []
+            r = re.compile(r'mailstore')
+            for _ in alist:
+                if r.match(_):
+                    flist.append(fname + '\\databases\\' + _)
             try:
-                self.list_db = self.db.get_mail_list()
+                self.list_db = []
+                self._db = []
+                for _ in flist:
+                    self._db.append(con_db(_))
+                    self.list_db += self._db[len(self._db) - 1].get_mail_list()
             except Exception, e:
                 print e
                 self.errorAlert(u'解析 db 错误，请选择正确的 db 文件')
