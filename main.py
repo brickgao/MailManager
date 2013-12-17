@@ -115,7 +115,7 @@ class QMailView(QtGui.QDialog):
         if not self.mailMsg['attachments'][Id]['exist']:
             return self.errorAlert(u'请选择存在的文件')
         fname = QtGui.QFileDialog.getSaveFileName(self, u'保存附件', self.mailMsg['attachments'][Id]['name'], u'*.*')
-        fname = unicode(fname, 'gbk')
+        fname = unicode(fname)
         if fname == '':
             return
         shutil.copyfile(self.mailMsg['attachments'][Id]['path'], fname)
