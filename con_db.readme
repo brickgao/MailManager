@@ -4,6 +4,28 @@ required libraries:
     SQLAlchemy: 0.8.0
 
 
+use ins = mail_dbs() to create a mail_dbs instance
+
+use ins.open(path) to open a new db
+
+use ins.dbs to view all mails opened
+eg. ins.dbs['my_email_address@example.com'][u'收件箱'] to get a mail list
+    a mail is a dictionary which keys are:
+        from_address: string
+        subject: string
+        body: string
+        to_address: string
+        attachments(list of attachments(dictionary))
+            key of dictionary:
+                exist: bool whether this attachment exist in file system
+                name: string
+                format_size: string size of this file ended with 'B', 'KB' or 'GB'
+                path: string absolute path of this file if exist == True
+        send_data: datetime
+        receive_date: datetime
+        snippet: string
+
+
 use con_db(path) to get a con_db instance
     path is the *.db file's absolute path
 

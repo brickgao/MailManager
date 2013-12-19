@@ -29,7 +29,7 @@ class con_db():
 
         query = self.engine.execute(sql)
 
-        ret = []
+        ret = {}
         labels = self.get_mail_label()
         for row in query:
             attachments = self.get_attachments(row[5])
@@ -57,7 +57,9 @@ class con_db():
                     label = u'收件箱'
             d.update({'label': label})
 
-            ret.append(d)
+            if not ret.get(label):
+                ret[label] = []
+            ret[label].append(d)
 
         return ret
 
@@ -135,12 +137,36 @@ class con_db():
         query = re.match(r'"(.*)" \<(.*)\>', mail_add)
         return query.groups()
 
+
+class mail_dbs():
+    def __init__(self):
+        self.dbs = {}
+
+    def open_db(self, path):
+        new_db = con_db(path)
+        info = {new_db.owner: new_db.get_mail_list()}
+        if not self.dbs.get(new_db.owner):
+            self.dbs.update(info)
+        else:
+            for key in info[new_db.owner].keys():
+                if not self.dbs.get(new_db.owner).get(key):
+                    self.dbs[new_db.owner][key] = info[new_db.owner][key]
+                else:
+                    self.dbs[new_db.owner][key] += info[new_db.owner][key]
+                    self.dbs[new_db.owner][key] = list(set(self.dbs[new_db.owner][key]))
+
 if __name__ == '__main__':
     path = r'C:\Users\ST\Documents\GitHub\MailManager' \
            r'\com.google.android.gm\databases\mailstore.funssuse@gmail.com.db'
-    ins = con_db(path)
-    print ins.owner
-
-    query = ins.get_mail_list()
-    for i in query:
-        print i.get('label')
+    path2 = r'C:\Users\ST\Documents\GitHub\MailManager' \
+            r'\com.google.android.gm.2\databases\mailstore.reamandream@gmail.com.db'
+    ins = mail_dbs()
+    ins.open_db(path)
+    ins.open_db(path2)
+    i = ins.dbs
+    for key in i.keys():
+        print key
+        for key2 in i[key].keys():
+            print key2
+            for i2 in i[key][key2]:
+                print i2['subject']
