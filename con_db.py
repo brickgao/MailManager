@@ -25,7 +25,7 @@ class con_db():
 
         sql = 'select messageId, fromAddress, subject, bodyCompressed, ' \
               'toAddresses, joinedAttachmentInfos, dateSentMs, ' \
-              'dateReceivedMs, snippet  from messages ' + limit
+              'dateReceivedMs, snippet, body  from messages ' + limit
 
         query = self.engine.execute(sql)
 
@@ -36,7 +36,7 @@ class con_db():
             if row[3]:
                 body = '<html><body>' + zlib.decompress(row[3]) + '</body></html>'
             else:
-                body = ''
+                body = '<html><body>' + row[9] + '</body></html>'
 
             d = {'id': row[0], 'from_address': row[1], 'subject': row[2],
                  'body': body, 'to_address': row[4], 'attachments': attachments,
