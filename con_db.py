@@ -42,8 +42,14 @@ class con_db():
                  'body': body, 'to_address': row[4], 'attachments': attachments,
                  'send_data': self.format_time(row[6]),
                  'receive_date': self.format_time(row[7]), 'snippet': row[8]}
-            d.update({'to_add_name': self.get_mail_add(d['to_address'])[0],
-                      'to_add_add': self.get_mail_add(d['to_address'])[1],
+            to_add = d.get('to_address').split('\n')
+            to_add_add = []
+            to_add_name = []
+            for i in to_add:
+                to_add_name.append(self.get_mail_add(i)[0])
+                to_add_add.append(self.get_mail_add(i)[1])
+            d.update({'to_add_name': to_add_name,
+                      'to_add_add': to_add_add,
                       'from_add_name': self.get_mail_add(d['from_address'])[0],
                       'from_add_add': self.get_mail_add(d['from_address'])[1]})
             label = '^no_label'
@@ -53,7 +59,7 @@ class con_db():
             if label == '^no_label':
                 if self.owner == d['from_add_add']:
                     label = u'发件箱'
-                elif self.owner == d['to_add_add']:
+                elif self.owner in d['to_add_add']:
                     label = u'收件箱'
             d.update({'label': label})
 
@@ -152,21 +158,29 @@ class mail_dbs():
                 if not self.dbs.get(new_db.owner).get(key):
                     self.dbs[new_db.owner][key] = info[new_db.owner][key]
                 else:
-                    self.dbs[new_db.owner][key] += info[new_db.owner][key]
-                    self.dbs[new_db.owner][key] = list(set(self.dbs[new_db.owner][key]))
+                    #mail_list = [m['id'] for m in self.dbs[new_db.owner][key]]
+                    for mail in info[new_db.owner][key]:
+                        #if mail['id'] not in mail_list:
+                        if mail not in self.dbs[new_db.owner][key]:
+                            self.dbs[new_db.owner][key].append(mail)
 
 if __name__ == '__main__':
-    path = r'C:\Users\ST\Documents\GitHub\MailManager' \
-           r'\com.google.android.gm\databases\mailstore.funssuse@gmail.com.db'
-    path2 = r'C:\Users\ST\Documents\GitHub\MailManager' \
-            r'\com.google.android.gm.2\databases\mailstore.reamandream@gmail.com.db'
+    path = \
+    [
+        r'C:\Users\ST\Documents\GitHub\MM_TEST\gmail\1219\com.google.android.gm\databases\mailstore.candylinux001@gmail.com.db',
+        r'C:\Users\ST\Documents\GitHub\MM_TEST\gmail\1219\com.google.android.gm\databases\mailstore.candylinux002@gmail.com.db',
+        r'C:\Users\ST\Documents\GitHub\MM_TEST\gmail\1219\com.google.android.gm\databases\mailstore.candytest001@gmail.com.db',
+        r'C:\Users\ST\Documents\GitHub\MM_TEST\gmail\1220\com.google.android.gm\databases\mailstore.candylinux001@gmail.com.db',
+        r'C:\Users\ST\Documents\GitHub\MM_TEST\gmail\1220\com.google.android.gm\databases\mailstore.candylinux002@gmail.com.db',
+        r'C:\Users\ST\Documents\GitHub\MM_TEST\gmail\1220\com.google.android.gm\databases\mailstore.candytest001@gmail.com.db'
+    ]
     ins = mail_dbs()
-    ins.open_db(path)
-    ins.open_db(path2)
+    for path in path:
+        ins.open_db(path)
     i = ins.dbs
     for key in i.keys():
         print key
         for key2 in i[key].keys():
             print key2
-            for i2 in i[key][key2]:
-                print i2['subject']
+            #for i2 in i[key][key2]:
+                #print i2['subject']
