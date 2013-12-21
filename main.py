@@ -1,8 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import sys, os, eml_gen, shutil, re
-from con_db import con_db
+import sys, os, eml_gen, shutil, re, con_db
 from PyQt4 import QtGui, QtCore, QtWebKit
 
 class QMailView(QtGui.QDialog):
@@ -140,6 +139,10 @@ class QMainArea(QtGui.QWidget):
         grid = QtGui.QGridLayout()
         grid.setSpacing(5)
 
+        self.mailboxList = QtGui.QTreeWidget()
+        self.mailboxList.setHeaderLabels([u''])
+        self.mailList.itemDoubleClicked.connect(self.getMailList)
+
         self.mailList = QtGui.QTreeWidget()
         self.mailList.setHeaderLabels([u'#' ,u'时间', u'收件人',
                                        u'发件人', u'标题', u'预览'])
@@ -150,13 +153,35 @@ class QMainArea(QtGui.QWidget):
         self.mailList.setColumnWidth(4, 100)
         self.mailList.itemDoubleClicked.connect(self.getMailView)
 
-        grid.addWidget(self.mailList)
+        grid.addWidget(self.mailboxList, 1, 0)
+        grid.addWidget(self.mailList, 1, 1)
+
+        grid.setColumnStretch(0, 1)
+        grid.setColumnStretch(1, 4)
 
         self.setLayout(grid)
 
 
     def updateInfo(self, list_db):
 
+        self.mailList.clear()
+
+        self.mailboxList.clear()
+        self.list_db = list_db
+
+        for _ in list_db:
+            user = QtGui.QTreeWidgetItem()
+            userName = _.dbs.keys()[0]
+            user.setText(0, userName)
+            self.mailboxList.addTopLevelItem(user)
+            for __ in _.dbs[userName]:
+                mailbox = QtGui.QTreeWidgetItem(user)
+                mailboxName = __
+                mailbox.setText(0, __)
+                self.mailboxList.addTopLevelItem(mailbox)
+                
+
+        '''
         self.mailList.clear()
         self.list_db = list_db
 
@@ -175,6 +200,12 @@ class QMainArea(QtGui.QWidget):
             mailInfo.setText(4, self.list_db[i]['subject'])
             mailInfo.setText(5, self.list_db[i]['snippet'])
             self.mailList.addTopLevelItem(mailInfo)
+        '''
+
+    def getMailList(self):
+
+        userName = self.mailList.currentItem().text(0)
+        mailboxName = self.mailList.currentItem().text(0)
 
 
     def getMailView(self):
@@ -189,7 +220,8 @@ class QMainArea(QtGui.QWidget):
 class MainWindow(QtGui.QMainWindow):
 
     def __init__(self):
-
+        
+        self.list_db = []
         super(MainWindow, self).__init__()
         self.initLayout()
 
@@ -217,16 +249,17 @@ class MainWindow(QtGui.QMainWindow):
 
         self.setCentralWidget(self.mainArea)
 
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1000, 600)
         self.setWindowTitle(u'Mail Manager')
         self.show()
 
 
     def inputFile(self):
 
-        fname = os.path.abspath(QtGui.QFileDialog.getExistingDirectory(self, u'打开文件夹'))
+        fname = QtGui.QFileDialog.getExistingDirectory(self, u'打开文件夹')
         if fname == '':
             return
+        fname = os.path.abspath(fname)
         try:
             alist = os.listdir(fname + '\\databases')
         except Exception, e:
@@ -239,11 +272,15 @@ class MainWindow(QtGui.QMainWindow):
                 if r.match(_):
                     flist.append(fname + '\\databases\\' + _)
             try:
-                self.list_db = []
-                self._db = []
                 for _ in flist:
-                    self._db.append(con_db(_))
-                    self.list_db += self._db[len(self._db) - 1].get_mail_list()
+                    __ = con_db.mail_dbs()
+                    __.open_db(_)
+                    tag = True
+                    for ___ in self.list_db:
+                        if ___.dbs[___.dbs.keys()[0]] == __.dbs[__.dbs.keys()[0]]:
+                            tag = False
+                            ___.open_db(_)
+                    if tag:     self.list_db.append(__)
             except Exception, e:
                 print e
                 self.errorAlert(u'解析 db 错误，请选择正确的 db 文件')
