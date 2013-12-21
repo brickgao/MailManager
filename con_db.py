@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 #encoding: utf-8
 __author__ = 'ST'
 
@@ -13,6 +12,7 @@ class con_db():
     def __init__(self, path):
         self.engine = create_engine('sqlite:///' + path)
         (self.db_dir, self.db_name) = os.path.split(path)
+        self.owner = re.match(r'mailstore\.(.*)\.db', self.db_name).groups()[0]
         mail_dir = os.path.dirname(self.db_dir)
         self.attach_dir = os.path.join(mail_dir, 'cache')
 
@@ -23,23 +23,49 @@ class con_db():
         if begin and end:
             limit = 'limit %d, %d' % (begin, end)
 
-        sql = 'select _id, fromAddress, subject, bodyCompressed, ' \
+        sql = 'select messageId, fromAddress, subject, bodyCompressed, ' \
               'toAddresses, joinedAttachmentInfos, dateSentMs, ' \
-              'dateReceivedMs, snippet  from messages ' + limit
+              'dateReceivedMs, snippet, body  from messages ' + limit
 
         query = self.engine.execute(sql)
 
-        ret = []
+        ret = {}
+        labels = self.get_mail_label()
         for row in query:
             attachments = self.get_attachments(row[5])
             if row[3]:
                 body = '<html><body>' + zlib.decompress(row[3]) + '</body></html>'
             else:
-                body = ''
-            ret.append({'id': row[0], 'from_address': row[1], 'subject': row[2],
-                        'body': body, 'to_address': row[4], 'attachments': attachments,
-                        'send_data': self.format_time(row[6]),
-                        'receive_date': self.format_time(row[7]), 'snippet': row[8]})
+                body = '<html><body>' + row[9] + '</body></html>'
+
+            d = {'id': row[0], 'from_address': row[1], 'subject': row[2],
+                 'body': body, 'to_address': row[4], 'attachments': attachments,
+                 'send_data': self.format_time(row[6]),
+                 'receive_date': self.format_time(row[7]), 'snippet': row[8]}
+            to_add = d.get('to_address').split('\n')
+            to_add_add = []
+            to_add_name = []
+            for i in to_add:
+                to_add_name.append(self.get_mail_add(i)[0])
+                to_add_add.append(self.get_mail_add(i)[1])
+            d.update({'to_add_name': to_add_name,
+                      'to_add_add': to_add_add,
+                      'from_add_name': self.get_mail_add(d['from_address'])[0],
+                      'from_add_add': self.get_mail_add(d['from_address'])[1]})
+            label = '^no_label'
+            for lab in labels:
+                if d['id'] == lab['message_id']:
+                    label = lab['name']
+            if label == '^no_label':
+                if self.owner == d['from_add_add']:
+                    label = u'发件箱'
+                elif self.owner in d['to_add_add']:
+                    label = u'收件箱'
+            d.update({'label': label})
+
+            if not ret.get(label):
+                ret[label] = []
+            ret[label].append(d)
 
         return ret
 
@@ -61,6 +87,30 @@ class con_db():
                 file_info = {'name': attach_name[index], 'format_size': format_size}
                 file_info.update(self.check_file(row[0]))
                 ret.append(file_info)
+        return ret
+
+    def get_all_label(self):
+        sql = "select _id, name from labels"
+
+        ret = []
+        query = self.engine.execute(sql)
+        for row in query:
+            if row[1] and (not row[1][0] == '^'):
+                ret.append({'id':row[0], 'name':row[1]})
+        return ret
+
+    def get_mail_label(self):
+        sql = "select labels_id, message_messageId from message_labels"
+
+        query = self.engine.execute(sql)
+        labels = self.get_all_label()
+        label_id = [lab['id'] for lab in labels]
+
+        ret = []
+        for row in query:
+            for label in labels:
+                if row[0] == label['id']:
+                    ret.append({'name': label['name'], 'message_id': row[1]})
         return ret
 
     def check_file(self, path):
@@ -89,11 +139,48 @@ class con_db():
         t = datetime.datetime.fromtimestamp(time / 1000.0)
         return t
 
-if __name__ == '__main__':
-    path = r'C:\Users\ST\Documents\GitHub\MailManager' \
-           r'\com.google.android.gm\databases\mailstore.funssuse@gmail.com.db'
-    ins = con_db(path)
+    def get_mail_add(self, mail_add):
+        query = re.match(r'"(.*)" \<(.*)\>', mail_add)
+        return query.groups()
 
-    query = ins.get_mail_list(1, 2)
-    for i in query:
-        print i
+
+class mail_dbs():
+    def __init__(self):
+        self.dbs = {}
+
+    def open_db(self, path):
+        new_db = con_db(path)
+        info = {new_db.owner: new_db.get_mail_list()}
+        if not self.dbs.get(new_db.owner):
+            self.dbs.update(info)
+        else:
+            for key in info[new_db.owner].keys():
+                if not self.dbs.get(new_db.owner).get(key):
+                    self.dbs[new_db.owner][key] = info[new_db.owner][key]
+                else:
+                    #mail_list = [m['id'] for m in self.dbs[new_db.owner][key]]
+                    for mail in info[new_db.owner][key]:
+                        #if mail['id'] not in mail_list:
+                        if mail not in self.dbs[new_db.owner][key]:
+                            self.dbs[new_db.owner][key].append(mail)
+
+if __name__ == '__main__':
+    path = \
+    [
+        r'C:\Users\ST\Documents\GitHub\MM_TEST\gmail\1219\com.google.android.gm\databases\mailstore.candylinux001@gmail.com.db',
+        r'C:\Users\ST\Documents\GitHub\MM_TEST\gmail\1219\com.google.android.gm\databases\mailstore.candylinux002@gmail.com.db',
+        r'C:\Users\ST\Documents\GitHub\MM_TEST\gmail\1219\com.google.android.gm\databases\mailstore.candytest001@gmail.com.db',
+        r'C:\Users\ST\Documents\GitHub\MM_TEST\gmail\1220\com.google.android.gm\databases\mailstore.candylinux001@gmail.com.db',
+        r'C:\Users\ST\Documents\GitHub\MM_TEST\gmail\1220\com.google.android.gm\databases\mailstore.candylinux002@gmail.com.db',
+        r'C:\Users\ST\Documents\GitHub\MM_TEST\gmail\1220\com.google.android.gm\databases\mailstore.candytest001@gmail.com.db'
+    ]
+    ins = mail_dbs()
+    for path in path:
+        ins.open_db(path)
+    i = ins.dbs
+    for key in i.keys():
+        print key
+        for key2 in i[key].keys():
+            print key2
+            #for i2 in i[key][key2]:
+                #print i2['subject']
