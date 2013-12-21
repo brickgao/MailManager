@@ -141,7 +141,7 @@ class QMainArea(QtGui.QWidget):
 
         self.mailboxList = QtGui.QTreeWidget()
         self.mailboxList.setHeaderLabels([u''])
-        self.mailList.itemDoubleClicked.connect(self.getMailList)
+        self.mailboxList.itemDoubleClicked.connect(self.getMailList)
 
         self.mailList = QtGui.QTreeWidget()
         self.mailList.setHeaderLabels([u'#' ,u'时间', u'收件人',
@@ -179,15 +179,22 @@ class QMainArea(QtGui.QWidget):
                 mailboxName = __
                 mailbox.setText(0, __)
                 self.mailboxList.addTopLevelItem(mailbox)
-                
 
-        '''
+    def getMailList(self):
+
+        if not self.mailboxList.currentItem().parent():     return
+        userName = unicode(self.mailboxList.currentItem().parent().text(0))
+        mailboxName = unicode(self.mailboxList.currentItem().text(0))
+
         self.mailList.clear()
-        self.list_db = list_db
 
-        for i in range(len(self.list_db)):
+        for _ in self.list_db:
+            if userName in _.dbs:
+                self.currentList = _.dbs[userName][mailboxName]
+
+        for i in range(len(self.currentList)):
             mailInfo = QtGui.QTreeWidgetItem()
-            receive_date = self.list_db[i]['receive_date']
+            receive_date = self.currentList[i]['receive_date']
             date_s = str(receive_date.year) + '-' + \
                      str(receive_date.month) + '-' + \
                      str(receive_date.day) + ' ' + \
@@ -195,23 +202,17 @@ class QMainArea(QtGui.QWidget):
                      str(receive_date.second)
             mailInfo.setText(0, str(i))
             mailInfo.setText(1, date_s)
-            mailInfo.setText(2, self.list_db[i]['to_address'])
-            mailInfo.setText(3, self.list_db[i]['from_address'])
-            mailInfo.setText(4, self.list_db[i]['subject'])
-            mailInfo.setText(5, self.list_db[i]['snippet'])
+            mailInfo.setText(2, self.currentList[i]['to_address'])
+            mailInfo.setText(3, self.currentList[i]['from_address'])
+            mailInfo.setText(4, self.currentList[i]['subject'])
+            mailInfo.setText(5, self.currentList[i]['snippet'])
             self.mailList.addTopLevelItem(mailInfo)
-        '''
-
-    def getMailList(self):
-
-        userName = self.mailList.currentItem().text(0)
-        mailboxName = self.mailList.currentItem().text(0)
 
 
     def getMailView(self):
 
         mailId = int(self.mailList.currentItem().text(0))
-        mailView = QMailView(self.list_db[mailId], parent = self)
+        mailView = QMailView(self.currentList[mailId], parent = self)
         mailView.exec_()
         mailView.destroy()
 
