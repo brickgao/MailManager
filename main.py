@@ -4,6 +4,32 @@
 import sys, os, eml_gen, shutil, re, con_db
 from PyQt4 import QtGui, QtCore, QtWebKit
 
+class QOutputView(QtGui.QDialog):
+
+    def __init__(self, list_db, parent = None):
+
+        self.list_db = list_db
+        QtGui.QDialog.__init__(self, parent)
+        self.initLayout()
+
+    def initLayout(self):
+
+        grid = QtGui.QGridLayout()
+        grid.setSpacing(10)
+
+        self.OutputView = QtGui.QTreeView()
+        self.OutputView.setHeader([u'', u'时间', u'收件人',
+                                       u'发件人', u'标题', u'预览'])
+
+        grid.addWidget(self.OutputView)
+
+        self.setLayout(grid)
+
+        self.setWindowTitle(u'批量导出至 *.eml')
+        self.show()
+
+        
+
 class QMailView(QtGui.QDialog):
 
     def __init__(self, mailMsg, parent = None):
@@ -141,7 +167,7 @@ class QMainArea(QtGui.QWidget):
 
         self.mailboxList = QtGui.QTreeWidget()
         self.mailboxList.setHeaderLabels([u''])
-        self.mailboxList.itemDoubleClicked.connect(self.getMailList)
+        self.mailboxList.itemClicked.connect(self.getMailList)
 
         self.mailList = QtGui.QTreeWidget()
         self.mailList.setHeaderLabels([u'#' ,u'时间', u'收件人',
@@ -181,16 +207,30 @@ class QMainArea(QtGui.QWidget):
                 self.mailboxList.addTopLevelItem(mailbox)
 
     def getMailList(self):
+            
+        self.currentList = []
 
-        if not self.mailboxList.currentItem().parent():     return
-        userName = unicode(self.mailboxList.currentItem().parent().text(0))
-        mailboxName = unicode(self.mailboxList.currentItem().text(0))
+        if not self.mailboxList.currentItem().parent():
 
-        self.mailList.clear()
+            userName = unicode(self.mailboxList.currentItem().text(0))
 
-        for _ in self.list_db:
-            if userName in _.dbs:
-                self.currentList = _.dbs[userName][mailboxName]
+            self.mailList.clear()
+
+            for _ in self.list_db:
+                if userName in _.dbs:
+                    for __ in _.dbs[userName].keys():
+                        ___ = _.dbs[userName][__]
+                        self.currentList += ___
+        else:
+
+            userName = unicode(self.mailboxList.currentItem().parent().text(0))
+            mailboxName = unicode(self.mailboxList.currentItem().text(0))
+
+            self.mailList.clear()
+
+            for _ in self.list_db:
+                if userName in _.dbs:
+                    self.currentList = _.dbs[userName][mailboxName]
 
         for i in range(len(self.currentList)):
             mailInfo = QtGui.QTreeWidgetItem()
@@ -242,8 +282,13 @@ class MainWindow(QtGui.QMainWindow):
         inputAction.setStatusTip(u'打开文件')
         inputAction.triggered.connect(self.inputFile)
 
+        outputAction = QtGui.QAction(u'批量导出', self)
+        outputAction.setStatusTip(u'将邮件批量导出至 *.eml')
+        outputAction.triggered.connect(self.outputFile)
+
         fileMenu = menubar.addMenu(u'文件')
         fileMenu.addAction(inputAction)
+        fileMenu.addAction(outputAction)
         fileMenu.addAction(exitAction)
 
         self.mainArea = QMainArea()
@@ -288,6 +333,11 @@ class MainWindow(QtGui.QMainWindow):
             else:
                 self.mainArea.updateInfo(self.list_db)
 
+    def outputFile(self):
+
+        dialog = QOutputView(self.list_db, parent = self)
+        dialog.exec_()
+        dialog.destroy()
 
     def errorAlert(self, s):
 
