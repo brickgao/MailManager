@@ -3,8 +3,34 @@
 
 import sys, os, eml_gen, shutil, re, con_db
 from PyQt4 import QtGui, QtCore, QtWebKit
+from collections import defaultdict
 
-class QOutputView(QtGui.QDialog):
+class QOutputModel(QtCore.QAbstractTableModel, object):
+
+    def __init__(self, parent):
+
+        super(QOutputModel, self).__init__(parent)
+
+        self._parent = parent
+
+        self._mail_list = defaultdict(int)
+
+        self.headers = [u'' ,u'时间', u'收件人',
+                        u'发件人', u'标题', u'预览']
+
+    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
+        if role == QtCore.Qt.DisplayRole and orientation == QtCore.Qt.Horizontal:
+            return self.headers[section]
+
+    def rowCount(self, index=None, *args, **kwargs):
+        return len(self._mail_list)
+
+    def columnCount(self, index=None, *args, **kwargs):
+        return 6
+    
+    
+
+class QOutputDialog(QtGui.QDialog):
 
     def __init__(self, list_db, parent = None):
 
@@ -17,13 +43,16 @@ class QOutputView(QtGui.QDialog):
         grid = QtGui.QGridLayout()
         grid.setSpacing(10)
 
+        self.OutputModel = QOutputModel(self)
+
         self.OutputView = QtGui.QTreeView()
-        self.OutputView.setHeader([u'', u'时间', u'收件人',
-                                       u'发件人', u'标题', u'预览'])
+        self.OutputView.setModel(self.OutputModel)
 
         grid.addWidget(self.OutputView)
 
         self.setLayout(grid)
+
+        self.setGeometry(120, 120, 1000, 600)
 
         self.setWindowTitle(u'批量导出至 *.eml')
         self.show()
@@ -335,7 +364,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def outputFile(self):
 
-        dialog = QOutputView(self.list_db, parent = self)
+        dialog = QOutputDialog(self.list_db, parent = self)
         dialog.exec_()
         dialog.destroy()
 
