@@ -46,12 +46,14 @@ class QOutputDialog(QtGui.QDialog):
             user = _.dbs.keys()[0]
             userInfo.setText(0, user)
             self.OutputView.addTopLevelItem(userInfo)
+            self.OutputView.expandItem(userInfo)
             for __ in _.dbs[user]:
                 mailboxInfo = QtGui.QTreeWidgetItem(userInfo)
                 mailboxInfo.setCheckState(0, QtCore.Qt.Unchecked)
                 mailbox = __
                 mailboxInfo.setText(0, mailbox)
                 self.OutputView.addTopLevelItem(mailboxInfo)
+                self.OutputView.expandItem(mailboxInfo)
                 currentList = _.dbs[user][__]
                 for i in range(len(currentList)):
                     mailInfo = QtGui.QTreeWidgetItem(mailboxInfo)
@@ -243,6 +245,7 @@ class QMainArea(QtGui.QWidget):
             userName = _.dbs.keys()[0]
             user.setText(0, userName)
             self.mailboxList.addTopLevelItem(user)
+            self.mailboxList.expandItem(user)
             for __ in _.dbs[userName]:
                 mailbox = QtGui.QTreeWidgetItem(user)
                 mailboxName = __
