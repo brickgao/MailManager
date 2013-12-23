@@ -470,10 +470,11 @@ class MainWindow(QtGui.QMainWindow):
             self.errorAlert(u'打开 db 错误，请选择正确的文件夹')
         else:
             flist = []
-            r = re.compile(r'mailstore')
+            r = re.compile(r'mailstore\.(.*)\.db$')
             for _ in alist:
                 if r.match(_):
                     flist.append(fname + '\\databases\\' + _)
+            print flist
             try:
                 for _ in flist:
                     __ = con_db.mail_dbs()
