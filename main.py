@@ -3,32 +3,6 @@
 
 import sys, os, eml_gen, shutil, re, con_db
 from PyQt4 import QtGui, QtCore, QtWebKit
-from collections import defaultdict
-
-class QOutputModel(QtCore.QAbstractTableModel, object):
-
-    def __init__(self, parent):
-
-        super(QOutputModel, self).__init__(parent)
-
-        self._parent = parent
-
-        self._mail_list = defaultdict(int)
-
-        self.headers = [u'' ,u'时间', u'收件人',
-                        u'发件人', u'标题', u'预览']
-
-    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
-        if role == QtCore.Qt.DisplayRole and orientation == QtCore.Qt.Horizontal:
-            return self.headers[section]
-
-    def rowCount(self, index=None, *args, **kwargs):
-        return len(self._mail_list)
-
-    def columnCount(self, index=None, *args, **kwargs):
-        return 6
-    
-    
 
 class QOutputDialog(QtGui.QDialog):
 
@@ -43,10 +17,17 @@ class QOutputDialog(QtGui.QDialog):
         grid = QtGui.QGridLayout()
         grid.setSpacing(10)
 
-        self.OutputModel = QOutputModel(self)
+        self.OutputView = QtGui.QTreeWidget()
+        self.OutputView.setHeaderLabels([u'' , u'#', u'时间',
+                                         u'收件人', u'发件人', u'标题', u'预览'])
+        self.OutputView.setColumnWidth(0, 200)
+        self.OutputView.setColumnWidth(1, 60)
+        self.OutputView.setColumnWidth(2, 120)
+        self.OutputView.setColumnWidth(3, 200)
+        self.OutputView.setColumnWidth(4, 200)
+        self.OutputView.setColumnWidth(5, 100)
 
-        self.OutputView = QtGui.QTreeView()
-        self.OutputView.setModel(self.OutputModel)
+        self.updateInfo()
 
         grid.addWidget(self.OutputView)
 
@@ -56,6 +37,39 @@ class QOutputDialog(QtGui.QDialog):
 
         self.setWindowTitle(u'批量导出至 *.eml')
         self.show()
+
+    def updateInfo(self):
+
+        for _ in self.list_db:
+            userInfo = QtGui.QTreeWidgetItem()
+            userInfo.setCheckState(0, QtCore.Qt.Unchecked)
+            user = _.dbs.keys()[0]
+            userInfo.setText(0, user)
+            self.OutputView.addTopLevelItem(userInfo)
+            for __ in _.dbs[user]:
+                mailboxInfo = QtGui.QTreeWidgetItem(userInfo)
+                mailboxInfo.setCheckState(0, QtCore.Qt.Unchecked)
+                mailbox = __
+                mailboxInfo.setText(0, mailbox)
+                self.OutputView.addTopLevelItem(mailboxInfo)
+                currentList = _.dbs[user][__]
+                for i in range(len(currentList)):
+                    mailInfo = QtGui.QTreeWidgetItem(mailboxInfo)
+                    mailInfo.setCheckState(1, QtCore.Qt.Unchecked)
+                    receive_date = currentList[i]['receive_date']
+                    date_s = str(receive_date.year) + '-' + \
+                             str(receive_date.month) + '-' + \
+                             str(receive_date.day) + ' ' + \
+                             str(receive_date.hour) + ':' + \
+                             str(receive_date.second)
+                    mailInfo.setText(1, str(i))
+                    mailInfo.setText(2, date_s)
+                    mailInfo.setText(3, currentList[i]['to_address'])
+                    mailInfo.setText(4, currentList[i]['from_address'])
+                    mailInfo.setText(5, currentList[i]['subject'])
+                    mailInfo.setText(6, currentList[i]['snippet'])
+                    self.OutputView.addTopLevelItem(mailInfo)
+            
 
         
 
@@ -276,6 +290,7 @@ class QMainArea(QtGui.QWidget):
             mailInfo.setText(4, self.currentList[i]['subject'])
             mailInfo.setText(5, self.currentList[i]['snippet'])
             self.mailList.addTopLevelItem(mailInfo)
+            
 
 
     def getMailView(self):
