@@ -34,7 +34,15 @@ class QOutputDialog(QtGui.QDialog):
         self.mailOutputBtn = QtGui.QPushButton(u'导出当前选择文件')
         self.mailOutputBtn.clicked.connect(self.mailOutput)
 
+        self.selectAll = QtGui.QPushButton(u'全选')
+        self.selectAll.clicked.connect(self.selectAllAction)
+
+        self.removeAll = QtGui.QPushButton(u'重置')
+        self.removeAll.clicked.connect(self.removeAllAction)
+
         grid.addWidget(self.OutputView, 0, 0, 1, 5)
+        grid.addWidget(self.selectAll, 1, 0, 1, 1)
+        grid.addWidget(self.removeAll, 1, 1, 1, 1)
         grid.addWidget(self.mailOutputBtn, 1, 4, 1, 1)
     
         self.setLayout(grid)
@@ -43,6 +51,22 @@ class QOutputDialog(QtGui.QDialog):
 
         self.setWindowTitle(u'批量导出至 *.eml')
         self.show()
+
+    def selectAllAction(self):
+        
+        self.updateAllcheckbox(QtCore.Qt.Checked)
+
+    def removeAllAction(self):
+
+        self.updateAllcheckbox(QtCore.Qt.Unchecked)
+
+    def updateAllcheckbox(self, state):
+
+        root = self.OutputView.invisibleRootItem()
+        for i in range(root.childCount()):
+            user = root.child(i)
+            self.updateFromUser(user, state)
+        
 
     def updateInfo(self):
 
