@@ -100,12 +100,15 @@ class QOutputDialog(QtGui.QDialog):
                 for k in range(mailbox.childCount()):
                     mail = mailbox.child(k)
                     mailId = int(mail.text(1))
-                    _.append(currentdb[userName][mailboxName][mailId])
+                    if mail.checkState(1) == QtCore.Qt.Checked:
+                        _.append(currentdb[userName][mailboxName][mailId])
 
         if not len(_):
             return self.errorAlert(u'请选择文件')
 
-        eml_gen.save_all_emails_from_db(_, dirName)
+        eml_gen.save_all_emails_from_list(_, dirName)
+
+        self.infoAlert(u'导出成功')
 
     def updateCheckbox(self, item, column):
         
@@ -171,6 +174,10 @@ class QOutputDialog(QtGui.QDialog):
     def errorAlert(self, s):
 
         QtGui.QMessageBox.critical(self, u'错误', s)
+
+    def infoAlert(self, s):
+        
+        QtGui.QMessageBox.information(self, u'提示', s)
         
 class QMailView(QtGui.QDialog):
 
@@ -265,6 +272,7 @@ class QMailView(QtGui.QDialog):
             return
         fname = os.path.abspath(fname)
         eml_gen.save_to_eml(self.mailMsg, fname)
+        self.infoAlert(u'导出成功')
 
     def attachmentsOpen(self):
 
@@ -286,11 +294,16 @@ class QMailView(QtGui.QDialog):
         if fname == '':
             return
         shutil.copyfile(self.mailMsg['attachments'][Id]['path'], fname)
+        self.infoAlert(u'导出成功')
 
 
     def errorAlert(self, s):
 
         QtGui.QMessageBox.critical(self, u'错误', s)
+
+    def infoAlert(self, s):
+        
+        QtGui.QMessageBox.information(self, u'提示', s)
 
 
 
