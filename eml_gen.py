@@ -67,9 +67,10 @@ def save_all_emails_from_list(emails, dir_base):
 		return 0
 
 	for i in emails:
-		filename = i[receive_date].strftime('%Y%m%d-%H%M%S-')
-		filename += i['subject'].replace(' ', '-')
-		save_to_eml(i, os.path.join(dir_base, filename + ".eml"))
+		filename = i['receive_date'].strftime('%Y%m%d-%H%M%S')
+		#filename += i['subject'].replace(' ', '-')
+		filename += '.eml'
+		save_to_eml(i, os.path.join(dir_base, filename.encode('gbk')))
 
 def save_all_emails_from_db(email_db, dir_base):
 	'''save_all_emails(email_db, dir_base) -> void
