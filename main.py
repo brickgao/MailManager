@@ -29,11 +29,13 @@ class QOutputDialog(QtGui.QDialog):
 
         self.updateInfo()
 
+        self.OutputView.itemChanged.connect(self.updateCheckbox)
+
         grid.addWidget(self.OutputView)
 
         self.setLayout(grid)
 
-        self.setGeometry(120, 120, 1000, 600)
+        self.setGeometry(120, 120, 1200, 600)
 
         self.setWindowTitle(u'批量导出至 *.eml')
         self.show()
@@ -71,10 +73,68 @@ class QOutputDialog(QtGui.QDialog):
                     mailInfo.setText(5, currentList[i]['subject'])
                     mailInfo.setText(6, currentList[i]['snippet'])
                     self.OutputView.addTopLevelItem(mailInfo)
-            
 
+    def updateCheckbox(self, item, column):
         
+        self.OutputView.blockSignals(True)
 
+        if item.checkState(column) == QtCore.Qt.Checked:
+            if item.childCount():
+                if item.parent():
+                    self.updateFromMailbox(item, QtCore.Qt.Checked)
+                else:
+                    self.updateFromUser(item, QtCore.Qt.Checked)
+
+        elif item.checkState(column) == QtCore.Qt.Unchecked:
+            if item.childCount():
+                if item.parent():
+                    self.updateFromMailbox(item, QtCore.Qt.Unchecked)
+                else:
+                    self.updateFromUser(item, QtCore.Qt.Unchecked)
+
+        root = self.OutputView.invisibleRootItem()
+        for i in range(root.childCount()):
+            user = root.child(i)
+            __ = user.childCount() * 2
+            for j in range(user.childCount()):
+                mailbox = user.child(j)
+                _ = mailbox.childCount() * 2
+                for k in range(mailbox.childCount()):
+                    mail = mailbox.child(k)
+                    if mail.checkState(1) == QtCore.Qt.Unchecked:           _ -= 2
+                    if mail.checkState(1) == QtCore.Qt.PartiallyChecked:    _ -= 1
+                if _ == 0:
+                    mailbox.setCheckState(0, QtCore.Qt.Unchecked)
+                elif _ == mailbox.childCount() * 2:
+                    mailbox.setCheckState(0, QtCore.Qt.Checked)
+                else:
+                    mailbox.setCheckState(0, QtCore.Qt.PartiallyChecked)
+                if mailbox.checkState(0) == QtCore.Qt.Unchecked:           __ -= 2
+                if mailbox.checkState(0) == QtCore.Qt.PartiallyChecked:    __ -= 1
+            if __ == 0:
+                user.setCheckState(0, QtCore.Qt.Unchecked)
+            elif __ == user.childCount() * 2:
+                user.setCheckState(0, QtCore.Qt.Checked)
+            else:
+                user.setCheckState(0, QtCore.Qt.PartiallyChecked)
+
+        self.OutputView.blockSignals(False)
+
+    def updateFromUser(self, item, state):
+
+        for i in range(item.childCount()):
+            mailbox = item.child(i)
+            mailbox.setCheckState(0, state)
+            for j in range(mailbox.childCount()):
+                mail = mailbox.child(j)
+                mail.setCheckState(1, state)
+
+    def updateFromMailbox(self, item, state):
+
+        for i in range(item.childCount()):
+            mail = item.child(i)
+            mail.setCheckState(1, state)
+        
 class QMailView(QtGui.QDialog):
 
     def __init__(self, mailMsg, parent = None):
