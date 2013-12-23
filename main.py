@@ -30,12 +30,16 @@ class QOutputDialog(QtGui.QDialog):
         self.updateInfo()
 
         self.OutputView.itemChanged.connect(self.updateCheckbox)
+        
+        self.mailOutputBtn = QtGui.QPushButton(u'导出当前选择文件')
+        self.mailOutputBtn.clicked.connect(self.mailOutput)
 
-        grid.addWidget(self.OutputView)
-
+        grid.addWidget(self.OutputView, 0, 0, 1, 5)
+        grid.addWidget(self.mailOutputBtn, 1, 4, 1, 1)
+    
         self.setLayout(grid)
 
-        self.setGeometry(120, 120, 1200, 600)
+        self.setGeometry(50, 50, 1200, 600)
 
         self.setWindowTitle(u'批量导出至 *.eml')
         self.show()
@@ -73,6 +77,35 @@ class QOutputDialog(QtGui.QDialog):
                     mailInfo.setText(5, currentList[i]['subject'])
                     mailInfo.setText(6, currentList[i]['snippet'])
                     self.OutputView.addTopLevelItem(mailInfo)
+
+    def mailOutput(self):
+        
+        _ = []
+
+        dirName = QtGui.QFileDialog.getExistingDirectory(self, u'打开文件夹')
+        if dirName == '':   return
+        dirName = os.path.abspath(dirName)
+
+        root = self.OutputView.invisibleRootItem()
+        for i in range(root.childCount()):
+            user = root.child(i)
+            userName = unicode(user.text(0))
+            currentdb = {}
+            for __ in self.list_db:
+                if userName in __.dbs:
+                    currentdb = __.dbs
+            for j in range(user.childCount()):
+                mailbox = user.child(j)
+                mailboxName = unicode(mailbox.text(0))
+                for k in range(mailbox.childCount()):
+                    mail = mailbox.child(k)
+                    mailId = int(mail.text(1))
+                    _.append(currentdb[userName][mailboxName][mailId])
+
+        if not len(_):
+            return self.errorAlert(u'请选择文件')
+
+        eml_gen.save_all_emails_from_db(_, dirName)
 
     def updateCheckbox(self, item, column):
         
@@ -134,6 +167,10 @@ class QOutputDialog(QtGui.QDialog):
         for i in range(item.childCount()):
             mail = item.child(i)
             mail.setCheckState(1, state)
+
+    def errorAlert(self, s):
+
+        QtGui.QMessageBox.critical(self, u'错误', s)
         
 class QMailView(QtGui.QDialog):
 
