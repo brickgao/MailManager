@@ -346,8 +346,8 @@ class QMainArea(QtGui.QWidget):
     def updateInfo(self, list_db):
 
         self.mailList.clear()
-
         self.mailboxList.clear()
+
         self.list_db = list_db
 
         for _ in list_db:
@@ -474,16 +474,16 @@ class MainWindow(QtGui.QMainWindow):
             for _ in alist:
                 if r.match(_):
                     flist.append(fname + '\\databases\\' + _)
-            print flist
             try:
                 for _ in flist:
                     __ = con_db.mail_dbs()
                     __.open_db(_)
                     tag = True
                     for ___ in self.list_db:
-                        if ___.dbs[___.dbs.keys()[0]] == __.dbs[__.dbs.keys()[0]]:
+                        if ___.dbs.keys()[0] == __.dbs.keys()[0]:
                             tag = False
                             ___.open_db(_)
+                            break
                     if tag:     self.list_db.append(__)
             except Exception, e:
                 print e
