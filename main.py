@@ -486,7 +486,7 @@ class MainWindow(QtGui.QMainWindow):
         fname = QtGui.QFileDialog.getExistingDirectory(self, u'打开文件夹')
         if fname == '':
             return
-        fname = os.path.abspath(fname)
+        fname = os.path.abspath(unicode(fname))
         try:
             alist = os.listdir(fname + '\\databases')
         except Exception, e:
