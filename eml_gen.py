@@ -4,7 +4,7 @@
 WARNING: NO EXCEPTION HANDLING in this script NOW !!!
 '''
 __author__="Xiami"
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __email__ = "i@f2light.com"
 __status__ = "Development"
 
@@ -37,7 +37,7 @@ def save_to_eml(obj, filepath):
 
 		# Put file's data
 		if att['exist'] == True:
-			fp = open(att['path'])
+			fp = open(att['path'], 'rb')
 			attdata = fp.read()
 			fp.close()
 		else:
