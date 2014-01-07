@@ -308,7 +308,7 @@ class QMailView(QtGui.QDialog):
         if not self.mailMsg['attachments'][Id]['exist']:
             return self.errorAlert(u'请选择存在的文件')
         fname = self.mailMsg['attachments'][Id]['path'].encode('gbk')
-        os.system(fname)
+        os.popen(fname)
 
     def attachmentsOutput(self):
 
