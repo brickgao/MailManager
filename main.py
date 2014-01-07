@@ -111,7 +111,7 @@ class QOutputDialog(QtGui.QDialog):
 
         dirName = QtGui.QFileDialog.getExistingDirectory(self, u'打开文件夹')
         if dirName == '':   return
-        dirName = os.path.abspath(dirName)
+        dirName = unicode(os.path.abspath(unicode(dirName)))
 
         root = self.OutputView.invisibleRootItem()
         for i in range(root.childCount()):
