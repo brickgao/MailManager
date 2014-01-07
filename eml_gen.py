@@ -94,7 +94,7 @@ def save_all_emails_from_list(emails, dir_base):
 			filename += u'无标题'
 
 		filename += '.eml'
-		save_to_eml(i, os.path.join(dir_base, filename.encode('gbk')))
+		save_to_eml(i, os.path.join(dir_base.encode('gbk'), filename.encode('gbk')))
 
 def save_all_emails_from_db(email_db, dir_base):
 	'''save_all_emails(email_db, dir_base) -> void
