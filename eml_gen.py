@@ -1,10 +1,11 @@
 #!/usr/bin/env python2
+# vim: set fileencoding=utf-8
 '''This script is used to convert emails in db into .eml files.
 
 WARNING: NO EXCEPTION HANDLING in this script NOW !!!
 '''
 __author__="Xiami"
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 __email__ = "i@f2light.com"
 __status__ = "Development"
 
@@ -16,6 +17,7 @@ from email.header import Header
 import os
 import os.path
 import stat
+import re
 
 def save_to_eml(obj, filepath):
 	eml_obj = MIMEMultipart()
@@ -67,8 +69,30 @@ def save_all_emails_from_list(emails, dir_base):
 		return 0
 
 	for i in emails:
-		filename = i['receive_date'].strftime('%Y%m%d-%H%M%S')
-		#filename += i['subject'].replace(' ', '-')
+		filename = i['receive_date'].strftime('%Y%m%d-%H%M%S-')
+
+		if i['subject'] != "":
+			# Take first 20 character (a character may contain 2 bytes)
+			re_seeable = re.compile('\S')
+			re_invalid = re.compile('[\n<>:"/\\\|\?\*]')
+			for p_char in range(20):
+				# Mail Subject is less than 10 character.
+				if p_char >= len(i['subject']):
+					break
+				if ord(i['subject'][p_char]) > 127:
+					# Non-ASCII
+					filename += i['subject'][p_char]
+				else:
+					if re_seeable.match(i['subject'][p_char]) \
+						and not re_invalid.match(i['subject'][p_char]):
+						# Can be a char
+						filename += i['subject'][p_char]
+					else:
+						# Or
+						filename += '.'
+		else:
+			filename += u'无标题'
+
 		filename += '.eml'
 		save_to_eml(i, os.path.join(dir_base, filename.encode('gbk')))
 
