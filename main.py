@@ -329,23 +329,6 @@ class QMailView(QtGui.QDialog):
             shutil.copyfile(self.mailMsg['attachments'][_id]['path'], _fname)
         self.infoAlert(u'导出成功')
             
-            
-
-        
-        '''
-        if not self.attachmentsList_val.currentItem():
-            return self.errorAlert(u'请选择文件')
-        Id = int(self.attachmentsList_val.currentItem().text(0))
-        if not self.mailMsg['attachments'][Id]['exist']:
-            return self.errorAlert(u'请选择存在的文件')
-        fname = QtGui.QFileDialog.getSaveFileName(self, u'保存附件', self.mailMsg['attachments'][Id]['name'], u'*.*')
-        fname = unicode(fname)
-        if fname == '':
-            return
-        shutil.copyfile(self.mailMsg['attachments'][Id]['path'], fname)
-        self.infoAlert(u'导出成功')
-        '''
-
 
     def errorAlert(self, s):
 
