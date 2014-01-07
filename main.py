@@ -18,14 +18,15 @@ class QOutputDialog(QtGui.QDialog):
         grid.setSpacing(10)
 
         self.OutputView = QtGui.QTreeWidget()
-        self.OutputView.setHeaderLabels([u'' , u'#', u'时间',
+        self.OutputView.setHeaderLabels([u'' , u'#', u'附件', u'时间',
                                          u'收件人', u'发件人', u'标题', u'预览'])
         self.OutputView.setColumnWidth(0, 200)
         self.OutputView.setColumnWidth(1, 60)
-        self.OutputView.setColumnWidth(2, 120)
-        self.OutputView.setColumnWidth(3, 200)
+        self.OutputView.setColumnWidth(2, 40)
+        self.OutputView.setColumnWidth(3, 120)
         self.OutputView.setColumnWidth(4, 200)
-        self.OutputView.setColumnWidth(5, 100)
+        self.OutputView.setColumnWidth(5, 200)
+        self.OutputView.setColumnWidth(6, 100)
 
         self.updateInfo()
 
@@ -95,11 +96,13 @@ class QOutputDialog(QtGui.QDialog):
                              str(receive_date.hour) + ':' + \
                              str(receive_date.second)
                     mailInfo.setText(1, str(i))
-                    mailInfo.setText(2, date_s)
-                    mailInfo.setText(3, currentList[i]['to_address'])
-                    mailInfo.setText(4, currentList[i]['from_address'])
-                    mailInfo.setText(5, currentList[i]['subject'])
-                    mailInfo.setText(6, currentList[i]['snippet'])
+                    if len(currentList[i]['attachments']):          mailInfo.setText(2, u'*')
+                    else:                                           mailInfo.setText(2, u'')
+                    mailInfo.setText(3, date_s)
+                    mailInfo.setText(4, currentList[i]['to_address'])
+                    mailInfo.setText(5, currentList[i]['from_address'])
+                    mailInfo.setText(6, currentList[i]['subject'])
+                    mailInfo.setText(7, currentList[i]['snippet'])
                     self.OutputView.addTopLevelItem(mailInfo)
 
     def mailOutput(self):
@@ -246,6 +249,7 @@ class QMailView(QtGui.QDialog):
         self.attachmentsList_val.itemDoubleClicked.connect(self.attachmentsOpen)
         for i in range(len(self.mailMsg['attachments'])):
             fileInfo = QtGui.QTreeWidgetItem()
+            fileInfo.setCheckState(0, QtCore.Qt.Unchecked)
             fileInfo.setText(0, str(i))
             fileInfo.setText(1, self.mailMsg['attachments'][i]['name'])
             fileInfo.setText(2, self.mailMsg['attachments'][i]['format_size'])
@@ -308,6 +312,27 @@ class QMailView(QtGui.QDialog):
 
     def attachmentsOutput(self):
 
+        _l = []
+        root = self.attachmentsList_val.invisibleRootItem()
+        for i in range(root.childCount()):
+            attachment = root.child(i)
+            if attachment.checkState(0):    _l.append(int(attachment.text(0)))
+        if not len(_l):     return self.errorAlert(u'请选择文件')
+        for _id in _l:
+            if not self.mailMsg['attachments'][_id]['exist']:
+                return self.errorAlert(u'请选择存在的文件')
+        fname = QtGui.QFileDialog.getExistingDirectory(self, u'保存到文件夹')
+        fname = unicode(fname)
+        for _id in _l:
+            _fname = fname + u'\\' + unicode(self.mailMsg['attachments'][_id]['name'])
+            print _fname
+            shutil.copyfile(self.mailMsg['attachments'][_id]['path'], _fname)
+        self.infoAlert(u'导出成功')
+            
+            
+
+        
+        '''
         if not self.attachmentsList_val.currentItem():
             return self.errorAlert(u'请选择文件')
         Id = int(self.attachmentsList_val.currentItem().text(0))
@@ -319,6 +344,7 @@ class QMailView(QtGui.QDialog):
             return
         shutil.copyfile(self.mailMsg['attachments'][Id]['path'], fname)
         self.infoAlert(u'导出成功')
+        '''
 
 
     def errorAlert(self, s):
@@ -349,13 +375,14 @@ class QMainArea(QtGui.QWidget):
         self.mailboxList.itemClicked.connect(self.getMailList)
 
         self.mailList = QtGui.QTreeWidget()
-        self.mailList.setHeaderLabels([u'#' ,u'时间', u'收件人',
+        self.mailList.setHeaderLabels([u'#' ,u'附件', u'时间', u'收件人',
                                        u'发件人', u'标题', u'预览'])
         self.mailList.setColumnWidth(0, 60)
-        self.mailList.setColumnWidth(1, 120)
-        self.mailList.setColumnWidth(2, 200)
+        self.mailList.setColumnWidth(1, 40)
+        self.mailList.setColumnWidth(2, 120)
         self.mailList.setColumnWidth(3, 200)
-        self.mailList.setColumnWidth(4, 100)
+        self.mailList.setColumnWidth(4, 200)
+        self.mailList.setColumnWidth(5, 100)
         self.mailList.itemDoubleClicked.connect(self.getMailView)
 
         grid.addWidget(self.mailboxList, 1, 0)
@@ -421,11 +448,13 @@ class QMainArea(QtGui.QWidget):
                      str(receive_date.hour) + ':' + \
                      str(receive_date.second)
             mailInfo.setText(0, str(i))
-            mailInfo.setText(1, date_s)
-            mailInfo.setText(2, self.currentList[i]['to_address'])
-            mailInfo.setText(3, self.currentList[i]['from_address'])
-            mailInfo.setText(4, self.currentList[i]['subject'])
-            mailInfo.setText(5, self.currentList[i]['snippet'])
+            if len(self.currentList[i]['attachments']):     mailInfo.setText(1, u'*')
+            else:                                           mailInfo.setText(1, u'')
+            mailInfo.setText(2, date_s)
+            mailInfo.setText(3, self.currentList[i]['to_address'])
+            mailInfo.setText(4, self.currentList[i]['from_address'])
+            mailInfo.setText(5, self.currentList[i]['subject'])
+            mailInfo.setText(6, self.currentList[i]['snippet'])
             self.mailList.addTopLevelItem(mailInfo)
             
 
