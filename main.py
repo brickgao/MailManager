@@ -325,7 +325,6 @@ class QMailView(QtGui.QDialog):
         fname = unicode(fname)
         for _id in _l:
             _fname = fname + u'\\' + unicode(self.mailMsg['attachments'][_id]['name'])
-            print _fname
             shutil.copyfile(self.mailMsg['attachments'][_id]['path'], _fname)
         self.infoAlert(u'导出成功')
             
