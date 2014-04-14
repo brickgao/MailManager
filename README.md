@@ -26,3 +26,9 @@ MailManager is a android gmail data viewer in PC. You can use it to view emails 
     ### View emil
     ![view email](./img/view.png)
     ![view email](./img/view_detail.png)
+    
+*   
+
+    ### Batch export to eml
+    ![batch export](./img/be1.png)
+    ![batch export](./img/be2.png)
