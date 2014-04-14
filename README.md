@@ -11,7 +11,7 @@ MailManager is a android gmail data viewer in PC. You can use it to view emails 
 ## Usage
 
 1.  Copy `/data/data/com.google.android.gm` to PC.
-1.  Click `文件` -> `打开` and choose `com.google.android.gm` folder to open database.
+1.  Click `鏂囦欢` -> `鎵撳紑` and choose `com.google.android.gm` folder to open database.
 
 ## Screenshot
 
